@@ -39,10 +39,10 @@ namespace ImGui
 			for (auto& entity : entities) {
 				ImGui::PushID(static_cast<int>(entity->ID));
 	
-				if (ImGui::Selectable(std::to_string(entity->ID).c_str(), index == SelectedIndex, ImGuiSelectableFlags_None)) {
+				if (ImGui::Selectable(entity->Name.c_str(), index == SelectedIndex, ImGuiSelectableFlags_None)) {
 					SelectedIndex = index;
 				}
-
+				index++;
 				ImGui::PopID();
 			}
 		}
