@@ -45,7 +45,8 @@ project "Engine"
 		"Source/%{prj.name}",
 		"External/FastNoise2/include",
 		"External/rapidjson",
-		"External/imgui"
+		"External/imgui",
+		"External/imgui-node-editor"
 	}
 
 	libdirs {  }
