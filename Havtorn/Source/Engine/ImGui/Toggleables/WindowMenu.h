@@ -1,3 +1,5 @@
+// Copyright 2022 Team Havtorn. All Rights Reserved.
+
 #pragma once
 #include "Imgui/ImguiToggleable.h"
 
@@ -7,7 +9,7 @@ namespace ImGui
 	{
 	public:
 		CWindowMenu(const char* aName, Havtorn::CImguiManager* manager);
-		~CWindowMenu() override;
+		~CWindowMenu() override = default;
 		void OnEnable() override;
 		void OnInspectorGUI() override;
 		void OnDisable() override;

@@ -5,11 +5,11 @@
 
 namespace ImGui
 {
-	class CHelpMenu : public CToggleable
+	class CViewMenu final : public CToggleable
 	{
 	public:
-		CHelpMenu(const char* aName, Havtorn::CImguiManager* manager);
-		~CHelpMenu() override;
+		CViewMenu(const char* aName, Havtorn::CImguiManager* manager);
+		~CViewMenu() override = default;
 		void OnEnable() override;
 		void OnInspectorGUI() override;
 		void OnDisable() override;

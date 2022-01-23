@@ -1,3 +1,5 @@
+// Copyright 2022 Team Havtorn. All Rights Reserved.
+
 #include "hvpch.h"
 #include "CameraSystem.h"
 #include "Scene/Scene.h"
@@ -39,13 +41,13 @@ void Havtorn::CCameraSystem::Update(CScene* scene)
 
 	F32 yaw = 0.0f, pitch = 0.0f;
 	if (GetAsyncKeyState(VK_UP))
-		pitch = UMath::DegToRad(-90.0f) * dt;
-	if (GetAsyncKeyState(VK_DOWN))
 		pitch = UMath::DegToRad(90.0f) * dt;
+	if (GetAsyncKeyState(VK_DOWN))
+		pitch = UMath::DegToRad(-90.0f) * dt;
 	if (GetAsyncKeyState(VK_LEFT))
-		yaw = UMath::DegToRad(-90.0f) * dt;
-	if (GetAsyncKeyState(VK_RIGHT))
 		yaw = UMath::DegToRad(90.0f) * dt;
+	if (GetAsyncKeyState(VK_RIGHT))
+		yaw = UMath::DegToRad(-90.0f) * dt;
 
 	transformComp->Transform.Rotate({ pitch, yaw, 0.0f });
 }

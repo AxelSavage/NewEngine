@@ -1,3 +1,5 @@
+// Copyright 2022 Team Havtorn. All Rights Reserved.
+
 #include "Includes/FullscreenShaderStructs.hlsli"
 
 PixelOutput main(VertexToPixel input)
@@ -10,6 +12,7 @@ PixelOutput main(VertexToPixel input)
     maxDepth = max(maxDepth, depth2x2.z);
     maxDepth = max(maxDepth, depth2x2.w);
     returnValue.myColor.r = maxDepth;
+    returnValue.myColor.gb = 0.0f;
     returnValue.myColor.a = 1.0f;
     return returnValue;
 };

@@ -43,7 +43,6 @@ project "Engine"
 	includedirs
 	{
 		"Source/%{prj.name}",
-		"External/spdlog/include",
 		"External/FastNoise2/include",
 		"External/rapidjson",
 		"External/imgui"
@@ -62,7 +61,7 @@ project "Engine"
 
 	shadermodel("5.0")
 	-- Warnings as errors
-	-- shaderoptions({"/WX"})
+	shaderoptions({"/WX"})
 	shaderobjectfileoutput(shaderTarget .. "%%(Filename).cso")
 
 	files
@@ -153,7 +152,6 @@ project "Launcher"
 	includedirs
 	{
 		"Source/%{prj.name}",
-		"External/spdlog/include",
 		"Source/Engine"
 	}
 

@@ -1,3 +1,5 @@
+// Copyright 2022 Team Havtorn. All Rights Reserved.
+
 #include "hvpch.h"
 #include "ImguiManager.h"
 
@@ -23,65 +25,35 @@
 
 namespace Havtorn
 {
-	//static ImFont* ImGui_LoadFont(ImFontAtlas& atlas, const char* name, float size, const ImVec2 & /*displayOffset*/ = ImVec2(0, 0))
-	//{
-	//	char* windir = nullptr;
-	//	if (_dupenv_s(&windir, nullptr, "WINDIR") || windir == nullptr)
-	//		return nullptr;
-
-	//	static const ImWchar ranges[] =
-	//	{
-	//		0x0020, 0x00FF, // Basic Latin + Latin Supplement
-	//		0x0104, 0x017C, // Polish characters and more
-	//		0,
-	//	};
-
-	//	ImFontConfig config;
-	//	config.OversampleH = 4;
-	//	config.OversampleV = 4;
-	//	config.PixelSnapH = false;
-
-	//	auto path = std::string(windir) + "\\Fonts\\" + name;
-	//	auto font = atlas.AddFontFromFileTTF(path.c_str(), size, &config, ranges);
-	//	//if (font)
-	//	//font->DisplayOffset = displayOffset;
-
-	//	free(windir);
-
-	//	return font;
-	//}
-	ImFontAtlas myFontAtlas;
-
-	CImguiManager::CImguiManager() 
+	CImguiManager::CImguiManager()
 		: RenderManager(nullptr)
 		, ViewportPadding(0.2f)
 		, IsEnabled(true)
+		, IsDebugInfoOpen(true)
+		, IsDemoOpen(false)
 	{
 	}
 
 	CImguiManager::~CImguiManager()
 	{
 		RenderManager = nullptr;
-        ImGui_ImplWin32_Shutdown();
+		ImGui_ImplWin32_Shutdown();
 		ImGui_ImplDX11_Shutdown();
 		ImGui::DestroyContext();
 	}
 
-	bool CImguiManager::Init(CDirectXFramework* framework, CWindowHandler* windowHandler, const CRenderManager* renderManager, CScene* scene)
+	bool CImguiManager::Init(const CDirectXFramework* framework, const CWindowHandler* windowHandler, const CRenderManager* renderManager, CScene* scene)
 	{
-		bool success = true;
-
 		ImGui::DebugCheckVersionAndDataLayout("1.86 WIP", sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(unsigned int));
 		ImGui::CreateContext();
 		SetEditorTheme(EEditorColorTheme::HavtornDark, EEditorStyleTheme::Havtorn);
-		//ImGui_LoadFont(myFontAtlas, "segoeui.ttf", 22.0f); // Doesn't really set the font
-		myFontAtlas.Build();
 		//ImGui::GetIO().Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\verdana.ttf", 14.0f);
 		ImGui::GetIO().Fonts->AddFontFromFileTTF("../External/imgui/misc/fonts/Roboto-Medium.ttf", 15.0f);
-		ImGui::CreateContext(&myFontAtlas);
+		ImGui::CreateContext();
 
 		MenuElements.emplace_back(std::make_unique<ImGui::CFileMenu>("File", this));
 		MenuElements.emplace_back(std::make_unique<ImGui::CEditMenu>("Edit", this));
+		MenuElements.emplace_back(std::make_unique<ImGui::CViewMenu>("View", this));
 		MenuElements.emplace_back(std::make_unique<ImGui::CWindowMenu>("Window", this));
 		MenuElements.emplace_back(std::make_unique<ImGui::CHelpMenu>("Help", this));
 
@@ -104,7 +76,7 @@ namespace Havtorn
 
 		InitEditorLayout();
 
-		success = ImGui_ImplWin32_Init(windowHandler->GetWindowHandle());
+		bool success = ImGui_ImplWin32_Init(windowHandler->GetWindowHandle());
 		if (!success)
 			return false;
 
@@ -152,16 +124,22 @@ namespace Havtorn
 
 	void CImguiManager::DebugWindow()
 	{
-		ImGui::ShowDemoWindow();
-		ImGui::ShowStyleEditor();
-
-		if (ImGui::Begin("Debug info", nullptr))
+		if (IsDemoOpen)
 		{
-			ImGui::Text(GetFrameRate().c_str());
-			ImGui::Text(GetSystemMemory().c_str());
-			ImGui::Text(GetDrawCalls().c_str());
+			ImGui::ShowDemoWindow(&IsDemoOpen);
 		}
-		ImGui::End();
+
+		if (IsDebugInfoOpen)
+		{
+			if (ImGui::Begin("Debug info", &IsDebugInfoOpen))
+			{
+				ImGui::Text(GetFrameRate().c_str());
+				ImGui::Text(GetSystemMemory().c_str());
+				ImGui::Text(GetDrawCalls().c_str());
+			}
+
+			ImGui::End();
+		}
 	}
 
 	//void CImguiManager::Receive(const SMessage& aMessage)
@@ -230,8 +208,8 @@ namespace Havtorn
 			colorProfile.ElementHighlight = SVector4(1.00f, 0.659f, 0.00f, 1.00f);
 			SetEditorColorProfile(colorProfile);
 		}
-			break;
-			
+		break;
+
 		case Havtorn::EEditorColorTheme::HavtornRed:
 		{
 			SEditorColorProfile colorProfile;
@@ -243,7 +221,7 @@ namespace Havtorn
 			colorProfile.ElementHighlight = SVector4(1.00f, 0.00f, 0.00f, 1.00f);
 			SetEditorColorProfile(colorProfile);
 		}
-			break;
+		break;
 
 		case Havtorn::EEditorColorTheme::HavtornGreen:
 		{
@@ -256,10 +234,9 @@ namespace Havtorn
 			colorProfile.ElementHighlight = SVector4(0.576f, 1.00f, 0.00f, 1.00f);
 			SetEditorColorProfile(colorProfile);
 		}
-			break;
+		break;
 
 		case Havtorn::EEditorColorTheme::Count:
-		default:
 		case Havtorn::EEditorColorTheme::DefaultDark:
 			ImGui::StyleColorsDark();
 			break;
@@ -294,15 +271,13 @@ namespace Havtorn
 			style->LogSliderDeadzone = 4;
 			style->TabRounding = 1;
 			break;
-
-		default:
 		case Havtorn::EEditorStyleTheme::Count:
 		case Havtorn::EEditorStyleTheme::Default:
 			break;
 		}
 	}
 
-	std::string CImguiManager::GetEditorColorThemeName(EEditorColorTheme colorTheme)
+	std::string CImguiManager::GetEditorColorThemeName(const EEditorColorTheme colorTheme)
 	{
 		switch (colorTheme)
 		{
@@ -315,29 +290,27 @@ namespace Havtorn
 		case Havtorn::EEditorColorTheme::HavtornGreen:
 			return "Havtorn Green";
 		case Havtorn::EEditorColorTheme::Count:
-			return std::string();
-		default:
-			return std::string();
+			return {};
 		}
+		return {};
 	}
 
-	::ImVec4 CImguiManager::GetEditorColorThemeRepColor(EEditorColorTheme colorTheme)
+	ImVec4 CImguiManager::GetEditorColorThemeRepColor(const EEditorColorTheme colorTheme)
 	{
 		switch (colorTheme)
 		{
 		case Havtorn::EEditorColorTheme::DefaultDark:
-			return ImVec4(0.11f, 0.16f, 0.55f, 1.00f);
+			return { 0.11f, 0.16f, 0.55f, 1.00f };
 		case Havtorn::EEditorColorTheme::HavtornDark:
-			return ImVec4(0.478f, 0.361f, 0.188f, 1.00f);
+			return { 0.478f, 0.361f, 0.188f, 1.00f };
 		case Havtorn::EEditorColorTheme::HavtornRed:
-			return ImVec4(0.478f, 0.188f, 0.188f, 1.00f);
+			return { 0.478f, 0.188f, 0.188f, 1.00f };
 		case Havtorn::EEditorColorTheme::HavtornGreen:
-			return ImVec4(0.355f, 0.478f, 0.188f, 1.00f);
+			return { 0.355f, 0.478f, 0.188f, 1.00f };
 		case Havtorn::EEditorColorTheme::Count:
-			return ImVec4();
-		default:
-			return ImVec4();
+			return {};
 		}
+		return {};
 	}
 
 	const SEditorLayout& CImguiManager::GetEditorLayout() const
@@ -350,13 +323,10 @@ namespace Havtorn
 		return ViewportPadding;
 	}
 
-	void CImguiManager::SetViewportPadding(F32 padding)
+	void CImguiManager::SetViewportPadding(const F32 padding)
 	{
-		if (ViewportPadding != padding)
-		{
-			ViewportPadding = padding;
-			InitEditorLayout();
-		}
+		ViewportPadding = padding;
+		InitEditorLayout();
 	}
 
 	const CRenderManager* CImguiManager::GetRenderManager() const
@@ -364,49 +334,59 @@ namespace Havtorn
 		return RenderManager;
 	}
 
+	void CImguiManager::ToggleDebugInfo()
+	{
+		IsDebugInfoOpen = !IsDebugInfoOpen;
+	}
+
+	void CImguiManager::ToggleDemo()
+	{
+		IsDemoOpen = !IsDemoOpen;
+	}
+
 	void CImguiManager::InitEditorLayout()
 	{
 		EditorLayout = SEditorLayout();
 
-		Havtorn::SVector2<F32> resolution = CEngine::GetInstance()->GetWindowHandler()->GetResolution();
+		const Havtorn::SVector2<F32> resolution = CEngine::GetInstance()->GetWindowHandler()->GetResolution();
 
-		F32 viewportAspectRatioInv = (9.0f / 16.0f);
-		F32 viewportPaddingX = ViewportPadding;
-		F32 viewportPaddingY = 0.0f;
+		constexpr F32 viewportAspectRatioInv = (9.0f / 16.0f);
+		const F32 viewportPaddingX = ViewportPadding;
+		constexpr F32 viewportPaddingY = 0.0f;
 
 		I16 viewportPosX = static_cast<I16>(resolution.X * viewportPaddingX);
 		I16 viewportPosY = static_cast<I16>(viewportPaddingY);
-		U16 viewportSizeX = static_cast<U16>(resolution.X - (2.0f * viewportPosX));
-		U16 viewportSizeY = static_cast<U16>(viewportSizeX * viewportAspectRatioInv);
+		U16 viewportSizeX = static_cast<U16>(resolution.X - (2.0f * static_cast<F32>(viewportPosX)));
+		U16 viewportSizeY = static_cast<U16>(static_cast<F32>(viewportSizeX) * viewportAspectRatioInv);
 
-		EditorLayout.ViewportPosition		= { viewportPosX, viewportPosY };
-		EditorLayout.ViewportSize			= { viewportSizeX, viewportSizeY };
-		EditorLayout.AssetBrowserPosition	= { viewportPosX, viewportPosY + viewportSizeY };
-		EditorLayout.AssetBrowserSize		= { viewportSizeX, U16(resolution.Y - viewportSizeY) };
-		EditorLayout.HierarchyViewPosition	= { 0, viewportPosY };
-		EditorLayout.HierarchyViewSize		= { U16(viewportPosX), U16(resolution.Y) };
-		EditorLayout.InspectorPosition		= { I16(resolution.X - viewportPosX), viewportPosY };
-		EditorLayout.InspectorSize			= { U16(viewportPosX), U16(resolution.Y) };
+		EditorLayout.ViewportPosition = { viewportPosX, viewportPosY };
+		EditorLayout.ViewportSize = { viewportSizeX, viewportSizeY };
+		EditorLayout.AssetBrowserPosition = { viewportPosX, static_cast<I16>(viewportPosY + viewportSizeY) };
+		EditorLayout.AssetBrowserSize = { viewportSizeX, static_cast<U16>(resolution.Y - static_cast<F32>(viewportSizeY)) };
+		EditorLayout.HierarchyViewPosition = { 0, viewportPosY };
+		EditorLayout.HierarchyViewSize = { static_cast<U16>(viewportPosX), static_cast<U16>(resolution.Y) };
+		EditorLayout.InspectorPosition = { static_cast<I16>(resolution.X - static_cast<F32>(viewportPosX)), viewportPosY };
+		EditorLayout.InspectorSize = { static_cast<U16>(viewportPosX), static_cast<U16>(resolution.Y) };
 	}
 
 	void CImguiManager::SetEditorColorProfile(const SEditorColorProfile& colorProfile)
 	{
 		ImVec4* colors = (&ImGui::GetStyle())->Colors;
 
-		ImVec4 backgroundBase = { colorProfile.BackgroundBase.X, colorProfile.BackgroundBase.Y, colorProfile.BackgroundBase.Z, colorProfile.BackgroundBase.W };
-		ImVec4 backgroundMid = { colorProfile.BackgroundMid.X, colorProfile.BackgroundMid.Y, colorProfile.BackgroundMid.Z, colorProfile.BackgroundMid.W };
+		const ImVec4 backgroundBase = { colorProfile.BackgroundBase.X, colorProfile.BackgroundBase.Y, colorProfile.BackgroundBase.Z, colorProfile.BackgroundBase.W };
+		const ImVec4 backgroundMid = { colorProfile.BackgroundMid.X, colorProfile.BackgroundMid.Y, colorProfile.BackgroundMid.Z, colorProfile.BackgroundMid.W };
 
-		ImVec4 elementBackground = { colorProfile.ElementBackground.X, colorProfile.ElementBackground.Y, colorProfile.ElementBackground.Z, colorProfile.ElementBackground.W };
-		ImVec4 elementHovered = { colorProfile.ElementHovered.X, colorProfile.ElementHovered.Y, colorProfile.ElementHovered.Z, colorProfile.ElementHovered.W };
-		ImVec4 elementActive = { colorProfile.ElementActive.X, colorProfile.ElementActive.Y, colorProfile.ElementActive.Z, colorProfile.ElementActive.W };
-		ImVec4 elementHighlight = { colorProfile.ElementHighlight.X, colorProfile.ElementHighlight.Y, colorProfile.ElementHighlight.Z, colorProfile.ElementHighlight.W };
+		const ImVec4 elementBackground = { colorProfile.ElementBackground.X, colorProfile.ElementBackground.Y, colorProfile.ElementBackground.Z, colorProfile.ElementBackground.W };
+		const ImVec4 elementHovered = { colorProfile.ElementHovered.X, colorProfile.ElementHovered.Y, colorProfile.ElementHovered.Z, colorProfile.ElementHovered.W };
+		const ImVec4 elementActive = { colorProfile.ElementActive.X, colorProfile.ElementActive.Y, colorProfile.ElementActive.Z, colorProfile.ElementActive.W };
+		const ImVec4 elementHighlight = { colorProfile.ElementHighlight.X, colorProfile.ElementHighlight.Y, colorProfile.ElementHighlight.Z, colorProfile.ElementHighlight.W };
 
 		colors[ImGuiCol_Text] = ImVec4(0.92f, 0.92f, 0.92f, 1.00f);
 		colors[ImGuiCol_TextDisabled] = ImVec4(0.44f, 0.44f, 0.44f, 1.00f);
 		colors[ImGuiCol_WindowBg] = backgroundMid;
 		colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 		colors[ImGuiCol_PopupBg] = ImVec4(0.13f, 0.13f, 0.13f, 0.94f);
-		colors[ImGuiCol_Border] = ImVec4(0.05f, 0.05f, 0.04f, 0.94);
+		colors[ImGuiCol_Border] = ImVec4(0.05f, 0.05f, 0.04f, 0.94f);
 		colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 		colors[ImGuiCol_FrameBg] = elementBackground;
 		colors[ImGuiCol_FrameBgHovered] = elementHovered;
@@ -451,39 +431,37 @@ namespace Havtorn
 		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 	}
 
-	const std::string CImguiManager::GetFrameRate()
+	std::string CImguiManager::GetFrameRate() const
 	{
 		std::string frameRateString = "Framerate: ";
-		U16 frameRate = static_cast<U16>(CTimer::AverageFrameRate());
+		const U16 frameRate = static_cast<U16>(CTimer::AverageFrameRate());
 		frameRateString.append(std::to_string(frameRate));
 		return frameRateString;
 	}
 
-	const std::string CImguiManager::GetSystemMemory()
+	std::string CImguiManager::GetSystemMemory() const
 	{
 		PROCESS_MEMORY_COUNTERS memCounter;
-		BOOL result = GetProcessMemoryInfo(GetCurrentProcess(),
+		if (GetProcessMemoryInfo(GetCurrentProcess(),
 			&memCounter,
-			sizeof(memCounter));
-
-		if (!result)
+			sizeof memCounter))
 		{
-			return "";
+			const SIZE_T memUsed = (memCounter.WorkingSetSize) / 1024;
+			const SIZE_T memUsedMb = (memCounter.WorkingSetSize) / 1024 / 1024;
+
+			std::string mem = "System Memory: ";
+			mem.append(std::to_string(memUsed));
+			mem.append("Kb (");
+			mem.append(std::to_string(memUsedMb));
+			mem.append("Mb)");
+
+			return mem;
 		}
 
-		SIZE_T memUsed = (memCounter.WorkingSetSize) / 1024;
-		SIZE_T memUsedMb = (memCounter.WorkingSetSize) / 1024 / 1024;
-
-		std::string mem = "System Memory: ";
-		mem.append(std::to_string(memUsed));
-		mem.append("Kb (");
-		mem.append(std::to_string(memUsedMb));
-		mem.append("Mb)");
-
-		return mem;
+		return "";
 	}
 
-	const std::string CImguiManager::GetDrawCalls()
+	std::string CImguiManager::GetDrawCalls() const
 	{
 		std::string drawCalls = "Draw Calls: ";
 		drawCalls.append(std::to_string(CRenderManager::NumberOfDrawCallsThisFrame));

@@ -1,3 +1,5 @@
+// Copyright 2022 Team Havtorn. All Rights Reserved.
+
 #include "hvpch.h"
 #include "WindowMenu.h"
 #include <imgui.h>
@@ -7,10 +9,6 @@ namespace ImGui
 {
 	CWindowMenu::CWindowMenu(const char* aName, Havtorn::CImguiManager* manager)
 		: CToggleable(aName, manager)
-	{
-	}
-
-	CWindowMenu::~CWindowMenu()
 	{
 	}
 
